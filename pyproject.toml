@@ -8,8 +8,17 @@ dependencies = [
     "dateparser>=1.2.1",
     "dotenv>=0.9.9",
     "fast-flights>=2.1",
+    "loguru>=0.7.3",
     "polars>=1.23.0",
     "rich>=13.9.4",
+    "schedule>=1.2.2",
     "sqlalchemy>=2.0.38",
     "streamlit>=1.42.2",
 ]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.scripts]
+scrapper = "vfd.scrapper:main_scheduled"

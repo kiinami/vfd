@@ -1,17 +1,20 @@
 import os
+import time
+
+import schedule
 from fast_flights import FlightData, Passengers, Result, get_flights
 from dotenv import load_dotenv
 import polars as pl
 from datetime import datetime
-from rich.progress import track
 from dateparser import parse as dateparse
+from loguru import logger
 
 def get_data():
-    load_dotenv()
-    start_dates = os.environ.get("START_DATES").split(",")
-    end_dates = os.environ.get("END_DATES").split(",")
-    departure_airports = os.environ.get("DEPARTURE_AIRPORTS").split(",")
-    arrival_airports = os.environ.get("ARRIVAL_AIRPORTS").split(",")
+    logger.info("Started fetch flights job")
+    start_dates = os.getenv("START_DATES").split(",")
+    end_dates = os.getenv("END_DATES").split(",")
+    departure_airports = os.getenv("DEPARTURE_AIRPORTS").split(",")
+    arrival_airports = os.getenv("ARRIVAL_AIRPORTS").split(",")
 
     flight_plans = []
     for sdate in start_dates:
@@ -38,7 +41,7 @@ def get_data():
         }
     )
 
-    for date, darp, aarp, typ in track(flight_plans, description="Fetching flights..."):
+    for date, darp, aarp, typ in flight_plans:
         result: Result = get_flights(
             flight_data=[
                 FlightData(date=date, from_airport=darp, to_airport=aarp)
@@ -73,6 +76,12 @@ def get_data():
         "sqlite:///data/flights.sqlite",
         if_table_exists="append"
     )
+    logger.info(f"Finished fetch flights job, added {len(df)} data points to the database")
 
-if __name__ == '__main__':
-    get_data()
+def main_scheduled():
+    load_dotenv()
+    logger.info(f"Starting scrapper scheduled job to run every {os.getenv('SCRAPE_INTERVAL', 60)} minutes")
+    schedule.every(int(os.getenv("SCRAPE_INTERVAL", 60))).minutes.do(get_data)
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
