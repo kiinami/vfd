@@ -24,24 +24,19 @@ def get_data():
             for aarp in arrival_airports:
                 flight_plans.append((edate, aarp, darp, "inbound"))
 
-    try:
-        df = pl.read_database(
-            query="SELECT * FROM flights",
-            connection="sqlite:///flights.sqlite",
-        )
-    except:
-        df = pl.DataFrame(
-            schema={
-                "scrapped": pl.Datetime,
-                "type": pl.Utf8,
-                "departure_airport": pl.Utf8,
-                "arrival_airport": pl.Utf8,
-                "departure": pl.Datetime,
-                "arrival": pl.Datetime,
-                "arrival_time_ahead": pl.Utf8,
-                "price": pl.Utf8,
-            }
-        )
+
+    df = pl.DataFrame(
+        schema={
+            "scrapped": pl.Datetime,
+            "type": pl.Utf8,
+            "departure_airport": pl.Utf8,
+            "arrival_airport": pl.Utf8,
+            "departure": pl.Datetime,
+            "arrival": pl.Datetime,
+            "arrival_time_ahead": pl.Utf8,
+            "price": pl.Utf8,
+        }
+    )
 
     for date, darp, aarp, typ in track(flight_plans, description="Fetching flights..."):
         result: Result = get_flights(
@@ -71,9 +66,11 @@ def get_data():
                     )]
                 )
 
+    if not os.path.isdir('data'):
+        os.mkdir('data')
     df.write_database(
         "flights",
-        "sqlite:///flights.sqlite",
+        "sqlite:///data/flights.sqlite",
         if_table_exists="append"
     )
 

@@ -1,10 +1,15 @@
 [project]
-name = "vfc-flight-tracker"
+name = "vfd"
 version = "0.1.0"
-description = "Add your description here"
+description = "Verifiable Flight Data"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "dateparser>=1.2.1",
+    "dotenv>=0.9.9",
     "fast-flights>=2.1",
+    "polars>=1.23.0",
+    "rich>=13.9.4",
+    "sqlalchemy>=2.0.38",
     "streamlit>=1.42.2",
 ]

@@ -11,3 +11,7 @@ wheels/
 
 # .idea
 .idea/
+
+# environment
+.env
+data/
