@@ -1,5 +1,3 @@
-import os
-import sqlite3
 import sys
 import time
 from datetime import datetime
@@ -17,7 +15,6 @@ from typing_extensions import Annotated
 
 
 def get_data(start_dates: str, end_dates: str, departure_airports: str, arrival_airports: str, run_once: bool, database: str):
-    logger.debug("Getting flight data")
     start_dates = start_dates.split(",")
     end_dates = end_dates.split(",")
     departure_airports = departure_airports.split(",")
@@ -34,20 +31,6 @@ def get_data(start_dates: str, end_dates: str, departure_airports: str, arrival_
             for aarp in arrival_airports:
                 flight_plans.append((edate, aarp, darp, "inbound"))
 
-
-    df = pl.DataFrame(
-        schema={
-            "scrapped": pl.Datetime,
-            "type": pl.Utf8,
-            "departure_airport": pl.Utf8,
-            "arrival_airport": pl.Utf8,
-            "departure": pl.Datetime,
-            "arrival": pl.Datetime,
-            "arrival_time_ahead": pl.Utf8,
-            "price": pl.Utf8,
-        }
-    )
-
     for date, darp, aarp, typ in flight_plans:
         result: Result = get_flights(
             flight_data=[
@@ -59,38 +42,32 @@ def get_data(start_dates: str, end_dates: str, departure_airports: str, arrival_
             fetch_mode="fallback",
         )
         for flight_possibility in result.flights:
-            if flight_possibility.is_best and flight_possibility.price != "Price unavailable":
-                df = pl.concat(
-                    [df,
-                    pl.DataFrame(
-                        {
-                            "scrapped": [datetime.now()],
-                            "type": [typ],
-                            "departure_airport": [darp],
-                            "arrival_airport": [aarp],
-                            "departure": [dateparse(flight_possibility.departure)],
-                            "arrival": [dateparse(flight_possibility.arrival)],
-                            "arrival_time_ahead": [flight_possibility.arrival_time_ahead],
-                            "price": [flight_possibility.price],
-                        }
-                    )]
+            if flight_possibility.is_best and flight_possibility.price != "Price unavailable" and flight_possibility.price != 0 and flight_possibility.departure and flight_possibility.arrival:
+                fp_df = pl.DataFrame(
+                    {
+                        "scrapped": [datetime.now()],
+                        "type": [typ],
+                        "name": [flight_possibility.name],
+                        "departure_airport": [darp],
+                        "arrival_airport": [aarp],
+                        "departure": [dateparse(flight_possibility.departure)],
+                        "arrival": [dateparse(flight_possibility.arrival)],
+                        "arrival_time_ahead": [flight_possibility.arrival_time_ahead],
+                        "price": [int(flight_possibility.price[1:])],
+                    }
                 )
-                logger.debug(f"Flight data found: {darp} -> {aarp} ({typ}), {flight_possibility.departure} -> {flight_possibility.arrival}, {flight_possibility.price}")
-
-    logger.info(f"Flight data scrapped, {len(df)} data points found")
-
-    if run_once:
-        print(df)
-    else:
-        try:
-            df.write_database(
-                "flights",
-                database,
-                if_table_exists="append"
-            )
-            logger.debug(f"{len(df)} data points written to database {database}")
-        except OperationalError:
-            logger.error(f'Error writing to database, are you sure the database "{database}" exists and is in path "{database[10:]}"?')
+                if run_once:
+                    print(fp_df.row(0))
+                else:
+                    try:
+                        fp_df.write_database(
+                            "flights",
+                            database,
+                            if_table_exists="append"
+                        )
+                    except OperationalError:
+                        logger.error(
+                            f'Error writing to database, are you sure the database "{database}" exists and is in path "{database[10:]}"?')
 
 def get_data_scheduled(interval, start_dates, end_dates, departure_airports, arrival_airports, run_once, database):
     logger.info(f"Running scrapper every {interval} minutes, first run in {interval} minutes")
