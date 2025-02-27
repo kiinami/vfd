@@ -1,0 +1,12 @@
+# .env files
+.env
+.env.example
+
+# Project files
+.gitignore
+
+# Data
+data/
+
+# Python env
+.venv/

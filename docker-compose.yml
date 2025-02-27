@@ -1,7 +1,9 @@
 services:
   scrapper:
+    build: .
     container_name: scrapper
     restart: unless-stopped
-    build: .
     volumes:
       - ./data:/app/data
+    env_file:
+      - .env
