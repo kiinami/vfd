@@ -163,6 +163,21 @@ wheels = [
 ]
 
 [[package]]
+name = "connectorx"
+version = "0.4.2"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b9/76/4038009d2765d3c1c347d41e065480f84076c03bf22236baa59942efc5bd/connectorx-0.4.2-cp312-cp312-macosx_10_7_x86_64.whl", hash = "sha256:0e23c5afcfba05cf841d5cca3f5bced4962be428eff50aefbdaa31778c7280c0", size = 35470367 },
+    { url = "https://files.pythonhosted.org/packages/85/e4/3e9aaa43a739a2e1e25902f303538ba119a72e900a39f94a1b261479aa71/connectorx-0.4.2-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:0f2eb4d52552f2d660ad8803243015b35869b705db6b4d560874850b9699e6ed", size = 33725420 },
+    { url = "https://files.pythonhosted.org/packages/b1/77/062aaf55c39b7eeb7f88b350ffb46e6e27247e09be6a551b68f201febba5/connectorx-0.4.2-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:61ff8b1d4d9fa80f246e6874f89221f64d6a8a8723cbbb4ac83ff1417416a0e4", size = 40733252 },
+    { url = "https://files.pythonhosted.org/packages/27/0c/4b88bac7f926ca74e960b607362440911e477d502dcb522311ac3939045e/connectorx-0.4.2-cp312-none-win_amd64.whl", hash = "sha256:ff3fad383d95fd3b8b45a9156895172cbed9f622ee9e957294df4ec22e3fe34c", size = 32423429 },
+    { url = "https://files.pythonhosted.org/packages/91/d9/2a91fcfae08a763b8e57eaeaf6d87322009df0f8db84cc62a105b255c3ea/connectorx-0.4.2-cp313-cp313-macosx_10_7_x86_64.whl", hash = "sha256:190bb9426bd46acb22d98ddaa7c362474338557f72e9c8fcf0a998d7aecb0ef5", size = 35460042 },
+    { url = "https://files.pythonhosted.org/packages/e6/81/d6414fe8d22aa483bdadadd4d3f541065aea301839b308663590a014bde7/connectorx-0.4.2-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:e6bdef6046a7e41de6fe1282024bb990a40281d1e104b803d82a928a443bb49a", size = 33723258 },
+    { url = "https://files.pythonhosted.org/packages/bf/27/2190fa12d29996298869276e3082ec63eb75216fdaac74aa150731174c10/connectorx-0.4.2-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:b337b44740fb68caff4c3c3ae667c09939ab9e5a2920ca675d9726f2321b8b9b", size = 40730949 },
+    { url = "https://files.pythonhosted.org/packages/3c/45/c368b4a6c4cf05666911714fd7b485d5035bd5f73e0ceb8497b61034230c/connectorx-0.4.2-cp313-none-win_amd64.whl", hash = "sha256:c33245810eac8abad05d6d089b89584013b8e03ac6f02dd50fb3655123eefa7b", size = 32420764 },
+]
+
+[[package]]
 name = "dateparser"
 version = "1.2.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1132,10 +1147,11 @@ wheels = [
 
 [[package]]
 name = "vfd"
-version = "0.2.1"
+version = "0.3.0"
 source = { editable = "." }
 dependencies = [
     { name = "bump-my-version" },
+    { name = "connectorx" },
     { name = "dateparser" },
     { name = "dotenv" },
     { name = "fast-flights" },
@@ -1151,6 +1167,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "bump-my-version", specifier = ">=0.32.2" },
+    { name = "connectorx", specifier = ">=0.4.2" },
     { name = "dateparser", specifier = ">=1.2.1" },
     { name = "dotenv", specifier = ">=0.9.9" },
     { name = "fast-flights", specifier = ">=2.1" },

@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "bump-my-version>=0.32.2",
+    "connectorx>=0.4.2",
     "dateparser>=1.2.1",
     "dotenv>=0.9.9",
     "fast-flights>=2.1",
