@@ -11,7 +11,8 @@ This project is still in its early stages, so there are a lot of features that I
 1. This project uses [uv](https://docs.astral.sh/uv/) to manage the virtual environment, so you will need to install it first. Refer to the documentation on how to install it on your system.
 2. Clone the repository
 3. Copy the `.env.example` file to `.env` and fill in the necessary information
-4. Run the scrapper with `docker compose up -d`
+4. Run the scrapper in Docker with `docker compose up -d`
+5. Alternatively, you can run the scrapper locally once with `uv run scrapper -r`. Run `uv run scrapper --help` to see all the available options.
 
 ## To-do
 
