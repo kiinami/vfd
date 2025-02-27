@@ -16,12 +16,12 @@ This project is still in its early stages, so there are a lot of features that I
 
 ## To-do
 
-- [ ] Dockerize the project with a cron job to run the scrapper regularly
+- [x] Dockerize the project with a cron job to run the scrapper regularly
   - [x] Job scheduling
   - [x] `Dockerfile` and `docker-compose.yml`
   - [x] Handling of `.env` file
   - [x] `.dockerignore`
-  - [ ] Image building and publishing with GitHub Actions
-- [ ] Stage queries in batches to avoid problems with Google
+  - [x] Image building and publishing with GitHub Actions
 - [ ] Add a small web interface to view the data
+- [ ] Stage queries in batches to avoid problems with Google
 - [ ] Add a way to send notifications when the price of a flight drops below a certain threshold
