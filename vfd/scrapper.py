@@ -107,7 +107,7 @@ def entrypoint(
         interval: Annotated[int, typer.Option("--interval", "-i", help="Interval in minutes to run the scrapper", envvar="VFD_SCRAPPER_INTERVAL")] = 60,
         database: Annotated[str, typer.Option("--database", "-d", help="Database to store the scrapped data", envvar="VFD_SCRAPPER_DATABASE")] = "sqlite:///data/flights.sqlite",
         run_once: Annotated[bool, typer.Option("--run-once", "-r", help="Run the scrapper once, print the data and exit")] = False,
-        verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Enable verbose logging", envvar="VFD_VERBOSE")] = False,
+        verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Enable verbose logging", envvar="VFD_SCRAPPER_VERBOSE")] = False,
 ):
     logger.remove()
     if verbose:
