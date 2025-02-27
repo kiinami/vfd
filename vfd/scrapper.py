@@ -32,6 +32,7 @@ def get_data(start_dates: str, end_dates: str, departure_airports: str, arrival_
                 flight_plans.append((edate, aarp, darp, "inbound"))
 
     for date, darp, aarp, typ in flight_plans:
+        logger.debug(f"Getting flights from {darp} to {aarp} on {date}")
         result: Result = get_flights(
             flight_data=[
                 FlightData(date=date, from_airport=darp, to_airport=aarp)
