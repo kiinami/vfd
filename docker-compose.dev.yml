@@ -1,8 +1,9 @@
 services:
   scrapper:
-    image: ghcr.io/kiinami/vfd:latest
+    build: .
     container_name: vfd-scrapper
     restart: unless-stopped
     volumes:
       - ./data:/app/data
-    env_file: ./.env
+    env_file:
+      - .env

@@ -3,7 +3,9 @@
 .env.example
 
 # Project files
+.git
 .gitignore
+.idea
 
 # Data
 data/
