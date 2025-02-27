@@ -93,7 +93,7 @@ def get_data(start_dates: str, end_dates: str, departure_airports: str, arrival_
             logger.error(f'Error writing to database, are you sure the database "{database}" exists and is in path "{database[10:]}"?')
 
 def get_data_scheduled(interval, start_dates, end_dates, departure_airports, arrival_airports, run_once, database):
-    logger.info(f"Running scrapper every {interval} minutes, starting in {interval} minutes")
+    logger.info(f"Running scrapper every {interval} minutes, first run in {interval} minutes")
     schedule.every(interval).minutes.do(get_data, start_dates, end_dates, departure_airports, arrival_airports, run_once, database)
     while True:
         schedule.run_pending()
