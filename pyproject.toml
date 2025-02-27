@@ -37,3 +37,8 @@ tag_message = "Release {new_version}"
 allow_dirty = false
 commit = true
 message = "chore: bump version: {current_version} → {new_version}"
+
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = 'version = "{current_version}"'
+replace = 'version = "{new_version}"'
