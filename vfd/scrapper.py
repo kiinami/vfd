@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 from fast_flights import FlightData, Passengers, Result, get_flights
 from loguru import logger
 from rich import print
+from sqlalchemy.exc import OperationalError
 from typing_extensions import Annotated
 
 
@@ -88,8 +89,8 @@ def get_data(start_dates: str, end_dates: str, departure_airports: str, arrival_
                 if_table_exists="append"
             )
             logger.debug(f"{len(df)} data points written to database {database}")
-        except sqlite3.OperationalError:
-            logger.error(f"Error writing to database, are you sure the database {database} exists and is in path `{database[10:]}`?")
+        except OperationalError:
+            logger.error(f'Error writing to database, are you sure the database "{database}" exists and is in path "{database[10:]}"?')
 
 def get_data_scheduled(interval, start_dates, end_dates, departure_airports, arrival_airports, run_once, database):
     logger.info(f"Running scrapper every {interval} minutes, starting in {interval} minutes")
