@@ -1,20 +1,26 @@
 import os
+import sqlite3
+import sys
 import time
-
-import schedule
-from fast_flights import FlightData, Passengers, Result, get_flights
-from dotenv import load_dotenv
-import polars as pl
 from datetime import datetime
-from dateparser import parse as dateparse
-from loguru import logger
 
-def get_data():
-    logger.info("Started fetch flights job")
-    start_dates = os.getenv("START_DATES").split(",")
-    end_dates = os.getenv("END_DATES").split(",")
-    departure_airports = os.getenv("DEPARTURE_AIRPORTS").split(",")
-    arrival_airports = os.getenv("ARRIVAL_AIRPORTS").split(",")
+import polars as pl
+import schedule
+import typer
+from dateparser import parse as dateparse
+from dotenv import load_dotenv
+from fast_flights import FlightData, Passengers, Result, get_flights
+from loguru import logger
+from rich import print
+from typing_extensions import Annotated
+
+
+def get_data(start_dates: str, end_dates: str, departure_airports: str, arrival_airports: str, run_once: bool, database: str):
+    logger.debug("Getting flight data")
+    start_dates = start_dates.split(",")
+    end_dates = end_dates.split(",")
+    departure_airports = departure_airports.split(",")
+    arrival_airports = arrival_airports.split(",")
 
     flight_plans = []
     for sdate in start_dates:
@@ -68,20 +74,55 @@ def get_data():
                         }
                     )]
                 )
+                logger.debug(f"Flight data found: {darp} -> {aarp} ({typ}), {flight_possibility.departure} -> {flight_possibility.arrival}, {flight_possibility.price}")
 
-    if not os.path.isdir('data'):
-        os.mkdir('data')
-    df.write_database(
-        "flights",
-        "sqlite:///data/flights.sqlite",
-        if_table_exists="append"
-    )
-    logger.info(f"Finished fetch flights job, added {len(df)} data points to the database")
+    logger.info(f"Flight data scrapped, {len(df)} data points found")
 
-def main_scheduled():
-    load_dotenv()
-    logger.info(f"Starting scrapper scheduled job to run every {os.getenv('SCRAPE_INTERVAL', 60)} minutes")
-    schedule.every(int(os.getenv("SCRAPE_INTERVAL", 60))).minutes.do(get_data)
+    if run_once:
+        print(df)
+    else:
+        try:
+            df.write_database(
+                "flights",
+                database,
+                if_table_exists="append"
+            )
+            logger.debug(f"{len(df)} data points written to database {database}")
+        except sqlite3.OperationalError:
+            logger.error(f"Error writing to database, are you sure the database {database} exists and is in path `{database[10:]}`?")
+
+def get_data_scheduled(interval, start_dates, end_dates, departure_airports, arrival_airports, run_once, database):
+    logger.info(f"Running scrapper every {interval} minutes, starting in {interval} minutes")
+    schedule.every(interval).minutes.do(get_data, start_dates, end_dates, departure_airports, arrival_airports, run_once, database)
     while True:
         schedule.run_pending()
         time.sleep(1)
+
+def entrypoint(
+        start_dates: Annotated[str, typer.Option(..., help="Comma separated list of start dates (in YYYY-MM-DD format)", envvar="VFD_SCRAPPER_START_DATES"),],
+        end_dates: Annotated[str, typer.Option(..., help="Comma separated list of end dates (in YYYY-MM-DD format)", envvar="VFD_SCRAPPER_END_DATES"),],
+        departure_airports: Annotated[str, typer.Option(..., help="Comma separated list of departure airports (in three-letter code format)", envvar="VFD_SCRAPPER_DEPARTURE_AIRPORTS"),],
+        arrival_airports: Annotated[str, typer.Option(..., help="Comma separated list of arrival airports (in three-letter code format)", envvar="VFD_SCRAPPER_ARRIVAL_AIRPORTS"),],
+        interval: Annotated[int, typer.Option("--interval", "-i", help="Interval in minutes to run the scrapper", envvar="VFD_SCRAPPER_INTERVAL")] = 60,
+        database: Annotated[str, typer.Option("--database", "-d", help="Database to store the scrapped data", envvar="VFD_SCRAPPER_DATABASE")] = "sqlite:///data/flights.sqlite",
+        run_once: Annotated[bool, typer.Option("--run-once", "-r", help="Run the scrapper once, print the data and exit")] = False,
+        verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Enable verbose logging", envvar="VFD_VERBOSE")] = False,
+):
+    logger.remove()
+    if verbose:
+        logger.add(sys.stderr, level="DEBUG")
+    else:
+        logger.add(sys.stderr, level="INFO")
+
+    if run_once:
+        logger.debug("Running scrapper once")
+        get_data(start_dates, end_dates, departure_airports, arrival_airports, run_once, database)
+    else:
+        get_data_scheduled(interval, start_dates, end_dates, departure_airports, arrival_airports, run_once, database)
+
+def main():
+    load_dotenv()
+    typer.run(entrypoint)
+
+if __name__ == "__main__":
+    main()
