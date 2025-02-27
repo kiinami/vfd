@@ -1,0 +1,53 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump-type:
+        description: 'Bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+        - major
+        - minor
+        - patch
+
+jobs:
+  build-and-push-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Bump version
+        id: bump
+        uses: callowayproject/bump-my-version@master
+        env:
+          BUMPVERSION_TAG: "true"
+        with:
+          args: ${{ inputs.bump-type }}
+          github-token: ${{ secrets.GH_TOKEN }}
+
+      - name: Build Docker image
+        run: docker build -t ghcr.io/kiinami/vfd:${{ steps.bump.outputs.current-version }} -t ghcr.io/kiinami/vfd:latest .
+        env:
+          DOCKER_CLI_EXPERIMENTAL: enabled
+
+      - name: Push Docker image to Github Container Registry
+        run: docker push ghcr.io/kiinami/vfd:${{ steps.bump.outputs.current-version }}
+        env:
+          DOCKER_CLI_EXPERIMENTAL: enabled
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
