@@ -45,9 +45,11 @@ jobs:
           DOCKER_CLI_EXPERIMENTAL: enabled
 
       - name: Push Docker image to Github Container Registry
-        run: docker push ghcr.io/kiinami/vfd:${{ steps.bump.outputs.current-version }}
+        run: docker push ghcr.io/kiinami/vfd
         env:
           DOCKER_CLI_EXPERIMENTAL: enabled
 
       - name: Release
         uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.bump.outputs.current-version }}
