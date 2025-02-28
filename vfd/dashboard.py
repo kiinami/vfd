@@ -29,7 +29,7 @@ def sidebar():
     with st.sidebar:
         st.title('Best flights')
 
-        st.header('Outbound')
+        st.header(':airplane_departure: Outbound')
 
         best_outbound_rn = get_best_rn("outbound", now())
         if best_outbound_rn:
@@ -55,7 +55,7 @@ def sidebar():
             with st.popover(f"Best ever unknown"):
                 st.write("We don't have any data for the best outbound flight ever.")
 
-        st.header('Inbound')
+        st.header(':airplane_arriving: Inbound')
 
         best_inbound_rn = get_best_rn("inbound", now())
         if best_inbound_rn:
@@ -83,7 +83,7 @@ def sidebar():
 
 
 def content():
-    st.title('Verifiable Flight Data')
+    st.title(':airplane: :eye: Verifiable Flight Data')
 
     data = get_all_flights_in_polars()
     st.header('Price history')
@@ -103,15 +103,22 @@ def content():
 
 
 def main():
-    st.set_page_config(page_title="Verifiable Flight Data", page_icon="✈️", layout="wide")
+    st.set_page_config(page_title=":airplane: :eye: Verifiable Flight Data", page_icon="✈️", layout="wide")
     sidebar()
     content()
 
 
 def entrypoint():
     load_dotenv()
-    cli.main_run([__file__, "--server.port=" + os.getenv("VFD_DASHBOARD_PORT", "4242"),
-                  "--server.address=" + os.getenv("VFD_DASHBOARD_HOST", "0.0.0.0")])
+    cli.main_run([
+        __file__,
+        "--server.port=" + os.getenv("VFD_DASHBOARD_PORT", "4242"),
+        "--server.address=" + os.getenv("VFD_DASHBOARD_HOST", "0.0.0.0"),
+        "--client.toolbarMode=viewer",
+        "--server.headless=true",
+        "--theme.font=monospace",
+        "--theme.base=dark"
+    ])
 
 if __name__ == "__main__":
     main()
