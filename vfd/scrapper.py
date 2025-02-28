@@ -18,16 +18,20 @@ def now_to_the_hour() -> datetime:
     return datetime.now().replace(minute=0, second=0, microsecond=0)
 
 
-def scrape_flights(date: str, departure_airport: str, arrival_airport: str, typ: str) -> Flight:
-    result = get_flights(
-        flight_data=[
-            FlightData(date=date, from_airport=departure_airport, to_airport=arrival_airport)
-        ],
-        trip="one-way",
-        seat="economy",
-        passengers=Passengers(adults=1),
-        fetch_mode="fallback",
-    )
+def scrape_flights(date: str, departure_airport: str, arrival_airport: str, typ: str) -> Flight | None:
+    try:
+        result = get_flights(
+            flight_data=[
+                FlightData(date=date, from_airport=departure_airport, to_airport=arrival_airport)
+            ],
+            trip="one-way",
+            seat="economy",
+            passengers=Passengers(adults=1),
+            fetch_mode="fallback",
+        )
+    except AssertionError:
+        logger.debug(f"No flights found from {departure_airport} to {arrival_airport} on {date}")
+        return None
     best_flight = sorted(
         [flight for flight in result.flights if flight.price != "Price unavailable" and flight.price != 0],
         key=lambda x: int(x.price[1:])
@@ -43,7 +47,6 @@ def scrape_flights(date: str, departure_airport: str, arrival_airport: str, typ:
         arrival_time_ahead=best_flight.arrival_time_ahead,
         price=int(best_flight.price[1:]),
     )
-
 
 def combinations(start_dates: str, end_dates: str, departure_airports: str, arrival_airports: str) -> list[
     tuple[str, str, str, str]]:
@@ -82,12 +85,19 @@ def combgen(start_dates: str, end_dates: str, departure_airports: str, arrival_a
 def scrapper(start_dates: str, end_dates: str, departure_airports: str, arrival_airports: str, interval: int):
     for date, darp, aarp, typ in combgen(start_dates, end_dates, departure_airports, arrival_airports):
         logger.debug(f"Getting flights from {darp} to {aarp} on {date}")
+
         best_flight_scrapped = scrape_flights(date, darp, aarp, typ)
-        best_flight_saved = get_best_rn(typ, now_to_the_hour())
-        if best_flight_saved is None or best_flight_scrapped.price < best_flight_saved.price:
-            save_new_best_flight(best_flight_scrapped, best_flight_saved)
-        logger.debug(f"Waiting {interval} seconds before next request")
-        time.sleep(interval)
+
+        if best_flight_scrapped:
+            best_flight_saved = get_best_rn(typ, now_to_the_hour())
+            if best_flight_saved is None or best_flight_scrapped.price < best_flight_saved.price:
+                save_new_best_flight(best_flight_scrapped, best_flight_saved)
+                logger.debug(
+                    f"Saved new best flight from {darp} to {aarp} on {date} for scrapped hour {best_flight_scrapped.scrapped}")
+
+        if interval > 0:
+            logger.debug(f"Waiting {interval} seconds before next request")
+            time.sleep(interval)
 
 
 def run_once_and_print(start_dates: str, end_dates: str, departure_airports: str, arrival_airports: str):
