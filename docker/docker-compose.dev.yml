@@ -1,9 +1,10 @@
 services:
   scrapper:
-    build: .
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
     container_name: vfd-scrapper
     restart: unless-stopped
     volumes:
       - ./data:/app/data
-    env_file:
-      - .env
+    env_file: ./.env
