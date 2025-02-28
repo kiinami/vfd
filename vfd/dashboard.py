@@ -1,6 +1,10 @@
+import os
+
 import polars as pl
 import streamlit as st
 from dateutil.relativedelta import relativedelta
+from dotenv import load_dotenv
+from streamlit.web import cli
 
 from vfd.db import get_best_rn, Flight, get_best_ever, get_best_last_24h, get_all_flights_in_polars
 from vfd.utils import now_to_the_hour as now
@@ -102,6 +106,12 @@ def main():
     st.set_page_config(page_title="Verifiable Flight Data", page_icon="✈️", layout="wide")
     sidebar()
     content()
+
+
+def entrypoint():
+    load_dotenv()
+    cli.main_run([__file__, "--server.port=" + os.getenv("VFD_DASHBOARD_PORT", "4242"),
+                  "--server.address=" + os.getenv("VFD_DASHBOARD_HOST", "0.0.0.0")])
 
 if __name__ == "__main__":
     main()

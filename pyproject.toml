@@ -23,6 +23,7 @@ build-backend = "hatchling.build"
 
 [project.scripts]
 scrapper = "vfd.scrapper:main"
+dashboard = "vfd.dashboard:entrypoint"
 
 [tool.bumpversion]
 current_version = "0.3.1"
