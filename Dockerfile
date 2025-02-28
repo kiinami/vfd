@@ -39,4 +39,4 @@ COPY --from=builder --chown=app:app /app /app
 ENV PATH="/app/.venv/bin:$PATH"
 
 # Run the entrypoint command
-CMD ["/usr/bin/supervisord", "-c", "/app/docker/supervisord.conf"]
+CMD ["/usr/bin/supervisord", "-c", "/app/supervisord.conf"]
