@@ -99,6 +99,9 @@ Verifiable Flight Data, of course. What else could VFD stand for?
 
 ## Contributing
 
+If you have any suggestions, feel free to open an issue or a pull request. The local installation instructions should
+suffice to get you started.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE.txt) file for details.
