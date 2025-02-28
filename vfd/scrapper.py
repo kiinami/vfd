@@ -11,7 +11,7 @@ from loguru import logger
 from rich import print
 from typing_extensions import Annotated
 
-from vfd.db import Flight, init_db, get_best_rn, save_new_best_flight
+from vfd.db import Flight, init_db, get_best_rn, save_new_best_flight, get_best_ever
 from vfd.utils import now_to_the_hour, logger_format
 
 
@@ -87,11 +87,17 @@ def scrapper(start_dates: str, end_dates: str, departure_airports: str, arrival_
         best_flight_scrapped = scrape_flights(date, darp, aarp, typ)
 
         if best_flight_scrapped:
-            best_flight_saved = get_best_rn(typ, now_to_the_hour())
-            if best_flight_saved is None or best_flight_scrapped.price < best_flight_saved.price:
-                save_new_best_flight(best_flight_scrapped, best_flight_saved)
+            best_flight_saved_rn = get_best_rn(typ, now_to_the_hour())
+            if best_flight_saved_rn is None or best_flight_scrapped.price < best_flight_saved_rn.price:
+                save_new_best_flight(best_flight_scrapped, best_flight_saved_rn)
                 logger.debug(
                     f"Saved new best flight from {darp} to {aarp} on {date} for scrapped hour {best_flight_scrapped.scrapped}")
+
+            best_flight_saved_ever = get_best_ever(typ)
+
+            if best_flight_scrapped == best_flight_saved_ever:
+                logger.log("NOTIFY",
+                           f"New best {best_flight_saved_ever.type} flight found: from {darp} to {aarp} on {date} for ${best_flight_saved_ever.price}")
 
         if interval > 0:
             logger.debug(f"Waiting {interval} seconds before next request")
@@ -125,14 +131,12 @@ def entrypoint(
     else:
         logger.add(sys.stderr, level="INFO", format=logger_format)
 
+    logger.level("NOTIFY", no=55)
     if notification_urls:
-        logger.info("Notification URLs provided, configuring notifier")
-
         notification_urls = [url.strip() for url in notification_urls.split(",")]
         notifier = Apprise()
         notifier.add(notification_urls)
 
-        logger.level("NOTIFY", no=55)
         logger.add(notifier.notify, level="NOTIFY", filter={"apprise": False}, format="{message}")
 
         logger.info(f"Notifier configured, added {len(notification_urls)} destinations")
@@ -141,7 +145,6 @@ def entrypoint(
         logger.debug("Running scrapper once")
         run_once_and_print(start_dates, end_dates, departure_airports, arrival_airports)
     else:
-        logger.log("NOTIFY", "Scrapper started")
         scrapper(start_dates, end_dates, departure_airports, arrival_airports, interval)
 
 def main():

@@ -58,7 +58,7 @@ def get_best_last_24h(typ: str):
         return None
 
 
-def get_best_ever(typ: str):
+def get_best_ever(typ: str) -> Flight | None:
     try:
         return Flight.select().where(Flight.type == typ).order_by(Flight.price).first()
     except DoesNotExist:
