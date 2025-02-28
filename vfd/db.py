@@ -1,9 +1,13 @@
 import os
 from datetime import datetime
 
+import polars as pl
+from dateutil.relativedelta import relativedelta
 from dotenv import load_dotenv
 from loguru import logger
 from peewee import *
+
+from vfd.utils import now_to_the_hour as now
 
 load_dotenv()
 db = SqliteDatabase(os.getenv("VFD_DATABASE"))
@@ -36,12 +40,32 @@ def init_db():
 
 def get_best_rn(typ: str, scrapped: datetime):
     try:
-        return Flight.get(Flight.type == typ, Flight.scrapped == scrapped)
+        return Flight.get((Flight.type == typ) & (Flight.scrapped == scrapped.replace(tzinfo=None)))
     except DoesNotExist:
         return None
 
+
+def get_best_last_24h(typ: str):
+    try:
+        return Flight.select().where(
+            (Flight.type == typ) & (Flight.scrapped > now().replace(tzinfo=None) - relativedelta(hours=24))).order_by(
+            Flight.price).first()
+    except DoesNotExist:
+        return None
+
+
+def get_best_ever(typ: str):
+    try:
+        return Flight.select().where(Flight.type == typ).order_by(Flight.price).first()
+    except DoesNotExist:
+        return None
 
 def save_new_best_flight(best_flight: Flight, old_best_flight: Flight | None):
     if old_best_flight:
         old_best_flight.delete_instance()
     best_flight.save()
+
+
+def get_all_flights_in_polars():
+    data_dicts = list(Flight.select().dicts())
+    return pl.DataFrame(data_dicts)

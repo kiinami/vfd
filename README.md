@@ -23,9 +23,10 @@ This project is still in its early stages, so there are a lot of features that I
   - [x] Handling of `.env` file
   - [x] `.dockerignore`
   - [x] Image building and publishing with GitHub Actions
-- [ ] Add a small web interface to view the data
+- [x] Add a small web interface to view the data
 - [ ] Add a way to send notifications when the price of a flight drops below the last best price
-- [ ] Stage queries in batches to avoid problems with Google
+- [x] Stage queries in batches to avoid problems with Google
+- [ ] Add authentication with [streamlit-authenticator](https://github.com/mkhorasani/Streamlit-Authenticator)
 
 ## FAQ
 

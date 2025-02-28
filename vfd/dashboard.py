@@ -1,122 +1,107 @@
-import datetime
-
 import polars as pl
 import streamlit as st
+from dateutil.relativedelta import relativedelta
+
+from vfd.db import get_best_rn, Flight, get_best_ever, get_best_last_24h, get_all_flights_in_polars
+from vfd.utils import now_to_the_hour as now
 
 
-def load_data():
-    df = pl.read_database_uri(
-        "SELECT * FROM flights",
-        "sqlite://data/flights.sqlite",
+def render_flight(flight: Flight):
+    if flight.scrapped == now().replace(tzinfo=None):
+        st.success("Most likely still available!")
+    elif flight.scrapped > now().replace(tzinfo=None) - relativedelta(hours=24):
+        st.warning("Might still be available")
+    else:
+        st.error("Most likely not available anymore")
+    st.title(f'{flight.departure_airport} -> {flight.arrival_airport} for ${flight.price}')
+    st.write(f'Departs **{flight.departure.date()}** at **{flight.departure.strftime("%H:%M")}**')
+    st.write(
+        f'Arrives **{flight.arrival.date()}** at **{flight.arrival.strftime("%H:%M")}** ({flight.arrival_time_ahead})')
+    st.write(f'Operated by **{flight.name}**')
+    st.caption(f'Scrapped {flight.scrapped.strftime("%Y-%m-%d %H:%M")}')
+
+
+def sidebar():
+    with st.sidebar:
+        st.title('Best flights')
+
+        st.header('Outbound')
+
+        best_outbound_rn = get_best_rn("outbound", now())
+        if best_outbound_rn:
+            with st.popover(f"Right now for ${best_outbound_rn.price}"):
+                render_flight(best_outbound_rn)
+        else:
+            with st.popover(f"Right now unknown"):
+                st.write("We don't have any data for the best outbound flight right now.")
+
+        best_outbound_last_24h = get_best_last_24h("outbound")
+        if best_outbound_last_24h:
+            with st.popover(f"In the last 24 hours for ${best_outbound_last_24h.price}"):
+                render_flight(best_outbound_last_24h)
+        else:
+            with st.popover(f"In the last 24 hours unknown"):
+                st.write("We don't have any outbound flight data for the last 24 hours yet!")
+
+        best_outbound_ever = get_best_ever("outbound")
+        if best_outbound_ever:
+            with st.popover(f"Best ever for ${best_outbound_ever.price}"):
+                render_flight(best_outbound_ever)
+        else:
+            with st.popover(f"Best ever unknown"):
+                st.write("We don't have any data for the best outbound flight ever.")
+
+        st.header('Inbound')
+
+        best_inbound_rn = get_best_rn("inbound", now())
+        if best_inbound_rn:
+            with st.popover(f"Right now for ${best_inbound_rn.price}"):
+                render_flight(best_inbound_rn)
+        else:
+            with st.popover(f"Right now unknown"):
+                st.write("We don't have any data for the best inbound flight right now.")
+
+        best_inbound_last_24h = get_best_last_24h("inbound")
+        if best_inbound_last_24h:
+            with st.popover(f"In the last 24 hours for ${best_inbound_last_24h.price}"):
+                render_flight(best_inbound_last_24h)
+        else:
+            with st.popover(f"In the last 24 hours unknown"):
+                st.write("We don't have any inbound flight data for the last 24 hours yet!")
+
+        best_inbound_ever = get_best_ever("inbound")
+        if best_inbound_ever:
+            with st.popover(f"Best ever for ${best_inbound_ever.price}"):
+                render_flight(best_inbound_ever)
+        else:
+            with st.popover(f"Best ever unknown"):
+                st.write("We don't have any data for the best inbound flight ever.")
+
+
+def content():
+    st.title('Verifiable Flight Data')
+
+    data = get_all_flights_in_polars()
+    st.header('Price history')
+    # create a dataframe that for each "scrapped" value has the outbound price and the inbound price
+    grouped = data.group_by("scrapped").agg(
+        outbound=pl.col("price").filter(pl.col("type") == "outbound").min(),
+        inbound=pl.col("price").filter(pl.col("type") == "inbound").min(),
+    )
+    st.line_chart(
+        grouped,
+        x="scrapped",
+        y=["outbound", "inbound"],
+        color=["#00ff00", "#0000ff"],
+        x_label="Scrapped time",
+        y_label="Price",
     )
 
-    return df
 
-
-def best_combination_last_24h(df: pl.DataFrame):
-    outbound_lowest = (df.filter(pl.col("type") == "outbound")
-                       .filter(pl.col("scrapped") >= datetime.datetime.now() - datetime.timedelta(days=1))
-                       .sort("price")
-                       .head(1)
-                       .row(0, named=True))
-    inbound_lowest = (df.filter(pl.col("type") == "inbound")
-                      .filter(pl.col("scrapped") >= datetime.datetime.now() - datetime.timedelta(days=1))
-                      .sort("price")
-                      .head(1)
-                      .row(0, named=True))
-
-    return outbound_lowest, inbound_lowest
-
-
-def best_by_hour(df: pl.DataFrame):
-    # Ensure the DataFrame is sorted by the 'scrapped' timestamp
-    df = df.sort("scrapped")
-
-    # Group by 'scrapped' time in 1-hour intervals and by 'type'
-    grouped = df.group_by_dynamic(
-        index_column="scrapped",
-        every="1h",
-        group_by="type",
-        closed="left",  # Define which side of the interval is closed
-    ).agg(
-        # Calculate the minimum price for each group
-        price=pl.col("price").min(),
-        # Get the row with the minimum price
-        name=pl.col("name").first(),
-        departure_airport=pl.col("departure_airport").first(),
-        arrival_airport=pl.col("arrival_airport").first(),
-        departure=pl.col("departure").first(),
-        arrival=pl.col("arrival").first()
-    )
-
-    inbound_grouped = grouped.filter(pl.col("type") == "inbound").rename(
-        {
-            "price": "inbound_price",
-            "name": "inbound_name",
-            "departure_airport": "inbound_departure_airport",
-            "arrival_airport": "inbound_arrival_airport",
-            "departure": "inbound_departure",
-            "arrival": "inbound_arrival",
-        }
-    )
-
-    outbound_grouped = grouped.filter(pl.col("type") == "outbound").rename(
-        {
-            "price": "outbound_price",
-            "name": "outbound_name",
-            "departure_airport": "outbound_departure_airport",
-            "arrival_airport": "outbound_arrival_airport",
-            "departure": "outbound_departure",
-            "arrival": "outbound_arrival",
-        }
-    )
-
-    best_trips = inbound_grouped.join(
-        outbound_grouped,
-        on="scrapped",
-        how="inner",
-    ).drop("type")
-
-    best_trips = best_trips.insert_column(
-        index=1,
-        column=(pl.col("inbound_price") + pl.col("outbound_price")).alias("price")
-    ).drop("inbound_price", "outbound_price")
-
-    return best_trips
+def main():
+    st.set_page_config(page_title="Verifiable Flight Data", page_icon="✈️", layout="wide")
+    sidebar()
+    content()
 
 if __name__ == "__main__":
-    st.set_page_config(page_title="Verifiable Flight Data", page_icon="✈️", layout="wide")
-
-    df = load_data()
-    best_outbound_last_24h, best_inbound_last_24h = best_combination_last_24h(df)
-
-    st.sidebar.title('Stats')
-    with st.sidebar.expander("Best in the last 24 hours"):
-        st.write('## Outbound')
-        st.write(
-            f'**{best_outbound_last_24h["departure_airport"]}** -> **{best_outbound_last_24h["arrival_airport"]}** ({best_outbound_last_24h["name"]})')
-        st.write(
-            f'Departs **{best_outbound_last_24h["departure"].date()}** at **{best_outbound_last_24h["departure"].strftime("%H:%M")}**')
-        st.write(
-            f'Arrives **{best_outbound_last_24h["arrival"].date()}** at **{best_outbound_last_24h["arrival"].strftime("%H:%M")}**')
-        st.write(f'### ${best_outbound_last_24h["price"]}')
-        st.caption(f'Scrapped {best_outbound_last_24h["scrapped"].strftime("%Y-%m-%d %H:%M")}')
-        st.sidebar.divider()
-        st.write('## Inbound')
-        st.write(
-            f'**{best_inbound_last_24h["departure_airport"]}** -> **{best_inbound_last_24h["arrival_airport"]}** ({best_inbound_last_24h["name"]})')
-        st.write(
-            f'Departs **{best_inbound_last_24h["departure"].date()}** at **{best_inbound_last_24h["departure"].strftime("%H:%M")}**')
-        st.write(
-            f'Arrives **{best_inbound_last_24h["arrival"].date()}** at **{best_inbound_last_24h["arrival"].strftime("%H:%M")}**')
-        st.write(f'### ${best_inbound_last_24h["price"]}')
-        st.caption(f'Scrapped {best_inbound_last_24h["scrapped"].strftime("%Y-%m-%d %H:%M")}')
-        st.divider()
-        st.write(f'Total price')
-        st.write(f'## ${best_outbound_last_24h["price"] + best_inbound_last_24h["price"]}')
-
-    with st.sidebar.expander("Best ever"):
-        st.write("To be implemented")
-
-    st.title('Verifiable Flight Data')
-    st.line_chart(best_by_hour(df), x="scrapped", y="price")
+    main()

@@ -11,6 +11,7 @@ dependencies = [
     "fast-flights>=2.1",
     "loguru>=0.7.3",
     "peewee>=3.17.9",
+    "polars>=1.23.0",
     "rich>=13.9.4",
     "streamlit>=1.42.2",
     "typer>=0.15.1",

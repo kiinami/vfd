@@ -29,7 +29,8 @@ def scrape_flights(date: str, departure_airport: str, arrival_airport: str, typ:
         logger.debug(f"No flights found from {departure_airport} to {arrival_airport} on {date}")
         return None
     best_flight = sorted(
-        [flight for flight in result.flights if flight.price != "Price unavailable" and flight.price != 0],
+        [flight for flight in result.flights if
+         flight.price != "Price unavailable" and flight.price != 0 and flight.price != "0"],
         key=lambda x: int(x.price[1:])
     )[0]
     return Flight(
