@@ -1,4 +1,5 @@
 import os
+import sys
 from datetime import datetime
 
 import polars as pl
@@ -7,7 +8,10 @@ from dotenv import load_dotenv
 from loguru import logger
 from peewee import *
 
-from vfd.utils import now_to_the_hour as now
+from vfd.utils import now_to_the_hour as now, logger_format
+
+logger.remove()
+logger.add(sys.stderr, level="INFO", format=logger_format)
 
 load_dotenv()
 db = SqliteDatabase(os.getenv("VFD_DATABASE"))
@@ -40,7 +44,7 @@ def init_db():
 
 def get_best_rn(typ: str, scrapped: datetime):
     try:
-        return Flight.get((Flight.type == typ) & (Flight.scrapped == scrapped.replace(tzinfo=None)))
+        return Flight.get((Flight.type == typ) & (Flight.scrapped == scrapped))
     except DoesNotExist:
         return None
 
@@ -48,7 +52,7 @@ def get_best_rn(typ: str, scrapped: datetime):
 def get_best_last_24h(typ: str):
     try:
         return Flight.select().where(
-            (Flight.type == typ) & (Flight.scrapped > now().replace(tzinfo=None) - relativedelta(hours=24))).order_by(
+            (Flight.type == typ) & (Flight.scrapped > now() - relativedelta(hours=24))).order_by(
             Flight.price).first()
     except DoesNotExist:
         return None

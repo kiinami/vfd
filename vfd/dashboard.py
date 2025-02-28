@@ -1,19 +1,24 @@
 import os
+import sys
 
 import polars as pl
 import streamlit as st
 from dateutil.relativedelta import relativedelta
 from dotenv import load_dotenv
+from loguru import logger
 from streamlit.web import cli
 
 from vfd.db import get_best_rn, Flight, get_best_ever, get_best_last_24h, get_all_flights_in_polars
-from vfd.utils import now_to_the_hour as now
+from vfd.utils import now_to_the_hour as now, logger_format
+
+logger.remove()
+logger.add(sys.stderr, level="INFO", format=logger_format)
 
 
 def render_flight(flight: Flight):
-    if flight.scrapped == now().replace(tzinfo=None):
+    if flight.scrapped == now():
         st.success("Most likely still available!")
-    elif flight.scrapped > now().replace(tzinfo=None) - relativedelta(hours=24):
+    elif flight.scrapped > now() - relativedelta(hours=24):
         st.warning("Might still be available")
     else:
         st.error("Most likely not available anymore")
@@ -103,21 +108,24 @@ def content():
 
 
 def main():
-    st.set_page_config(page_title=":airplane: :eye: Verifiable Flight Data", page_icon="✈️", layout="wide")
+    st.set_page_config(page_title="✈️ 👁️ Verifiable Flight Data", page_icon="✈️", layout="wide")
     sidebar()
     content()
 
 
 def entrypoint():
     load_dotenv()
+    logger.info(
+        "Dashboard started at http://" + os.getenv("VFD_DASHBOARD_HOST") + ":" + os.getenv("VFD_DASHBOARD_PORT"))
     cli.main_run([
-        __file__,
         "--server.port=" + os.getenv("VFD_DASHBOARD_PORT", "4242"),
         "--server.address=" + os.getenv("VFD_DASHBOARD_HOST", "0.0.0.0"),
         "--client.toolbarMode=viewer",
         "--server.headless=true",
+        "--browser.gatherUsageStats=false",
         "--theme.font=monospace",
-        "--theme.base=dark"
+        "--theme.base=dark",
+        __file__,
     ])
 
 if __name__ == "__main__":

@@ -11,7 +11,7 @@ from rich import print
 from typing_extensions import Annotated
 
 from vfd.db import Flight, init_db, get_best_rn, save_new_best_flight
-from vfd.utils import now_to_the_hour
+from vfd.utils import now_to_the_hour, logger_format
 
 
 def scrape_flights(date: str, departure_airport: str, arrival_airport: str, typ: str) -> Flight | None:
@@ -116,14 +116,15 @@ def entrypoint(
 ):
     logger.remove()
     if verbose:
-        logger.add(sys.stderr, level="DEBUG")
+        logger.add(sys.stderr, level="DEBUG", format=logger_format)
     else:
-        logger.add(sys.stderr, level="INFO")
+        logger.add(sys.stderr, level="INFO", format=logger_format)
 
     if run_once:
         logger.debug("Running scrapper once")
         run_once_and_print(start_dates, end_dates, departure_airports, arrival_airports)
     else:
+        logger.info("Scrapper started")
         scrapper(start_dates, end_dates, departure_airports, arrival_airports, interval)
 
 def main():

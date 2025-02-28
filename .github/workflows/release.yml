@@ -40,7 +40,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Docker image
-        run: docker build -t ghcr.io/kiinami/vfd:${{ steps.bump.outputs.current-version }} -t ghcr.io/kiinami/vfd:latest -f docker/Dockerfile .
+        run: docker build -t ghcr.io/kiinami/vfd:${{ steps.bump.outputs.current-version }} -t ghcr.io/kiinami/vfd:latest .
         env:
           DOCKER_CLI_EXPERIMENTAL: enabled
 

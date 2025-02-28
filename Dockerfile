@@ -13,10 +13,10 @@ ENV UV_PYTHON_DOWNLOADS=0
 
 WORKDIR /app
 RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=../uv.lock,target=uv.lock \
-    --mount=type=bind,source=../pyproject.toml,target=pyproject.toml \
+    --mount=type=bind,source=./uv.lock,target=uv.lock \
+    --mount=type=bind,source=./pyproject.toml,target=pyproject.toml \
     uv sync --frozen --no-install-project --no-dev
-ADD .. /app
+ADD . /app
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev
 
@@ -27,11 +27,16 @@ FROM python:3.12-slim-bookworm
 # Python executable must be the same, e.g., using `python:3.11-slim-bookworm`
 # will fail.
 
+# Install supervisord
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    supervisor \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy the application from the builder
 COPY --from=builder --chown=app:app /app /app
 
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
 
-# Run the scrapper command
-CMD ["scrapper"]
+# Run the entrypoint command
+CMD ["/usr/bin/supervisord", "-c", "/app/docker/supervisord.conf"]
