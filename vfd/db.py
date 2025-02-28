@@ -36,10 +36,15 @@ class Flight(Model):
 
 
 def init_db():
-    db.connect()
-    db.create_tables([Flight])
-    db.close()
-    logger.debug("Database initialized")
+    try:
+        db.connect()
+        db.create_tables([Flight])
+        db.close()
+        logger.debug("Database initialized")
+    except OperationalError:
+        logger.error(
+            f"Database could not be opened, are you sure the path '{os.getenv("VFD_DATABASE")}' is correct and absolute?")
+        sys.exit(1)
 
 
 def get_best_rn(typ: str, scrapped: datetime):
