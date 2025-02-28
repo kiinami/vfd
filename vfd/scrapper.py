@@ -3,6 +3,7 @@ import time
 from typing import Any, Generator
 
 import typer
+from apprise import Apprise
 from dateparser import parse as dateparse
 from dotenv import load_dotenv
 from fast_flights import FlightData, Passengers, get_flights
@@ -111,20 +112,36 @@ def entrypoint(
         interval: Annotated[
             int, typer.Option("--interval", "-i", help="Interval in seconds between each request to the API",
                               envvar="VFD_SCRAPPER_INTERVAL")] = 60,
+        notification_urls: Annotated[str, typer.Option("--notification-urls", "-n",
+                                                       help="Comma separated list of Apprise URLs to notify when a new best flight is found",
+                                                       envvar="VFD_SCRAPPER_NOTIFICATION_URLS")] = "",
         run_once: Annotated[bool, typer.Option("--run-once", "-r", help="Run the scrapper once, print the data and exit")] = False,
         verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Enable verbose logging", envvar="VFD_SCRAPPER_VERBOSE")] = False,
 ):
     logger.remove()
+
     if verbose:
         logger.add(sys.stderr, level="DEBUG", format=logger_format)
     else:
         logger.add(sys.stderr, level="INFO", format=logger_format)
 
+    if notification_urls:
+        logger.info("Notification URLs provided, configuring notifier")
+
+        notification_urls = [url.strip() for url in notification_urls.split(",")]
+        notifier = Apprise()
+        notifier.add(notification_urls)
+
+        logger.level("NOTIFY", no=55)
+        logger.add(notifier.notify, level="NOTIFY", filter={"apprise": False}, format="{message}")
+
+        logger.info(f"Notifier configured, added {len(notification_urls)} destinations")
+
     if run_once:
         logger.debug("Running scrapper once")
         run_once_and_print(start_dates, end_dates, departure_airports, arrival_airports)
     else:
-        logger.info("Scrapper started")
+        logger.log("NOTIFY", "Scrapper started")
         scrapper(start_dates, end_dates, departure_airports, arrival_airports, interval)
 
 def main():
