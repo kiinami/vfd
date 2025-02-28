@@ -4,5 +4,5 @@ services:
     container_name: vfd-scrapper
     restart: unless-stopped
     volumes:
-      - ./data:/app/data
+      - ../data:/app/data
     env_file: ./.env
