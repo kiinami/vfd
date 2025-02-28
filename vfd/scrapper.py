@@ -1,6 +1,5 @@
 import sys
 import time
-from datetime import datetime
 from typing import Any, Generator
 
 import typer
@@ -12,10 +11,7 @@ from rich import print
 from typing_extensions import Annotated
 
 from vfd.db import Flight, init_db, get_best_rn, save_new_best_flight
-
-
-def now_to_the_hour() -> datetime:
-    return datetime.now().replace(minute=0, second=0, microsecond=0)
+from vfd.utils import now_to_the_hour
 
 
 def scrape_flights(date: str, departure_airport: str, arrival_airport: str, typ: str) -> Flight | None:
