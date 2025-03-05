@@ -24,7 +24,7 @@ def scrape_flights(date: str, departure_airport: str, arrival_airport: str, typ:
             trip="one-way",
             seat="economy",
             passengers=Passengers(adults=1),
-            fetch_mode="fallback",
+            fetch_mode="local",
         )
     except AssertionError:
         logger.debug(f"No flights found from {departure_airport} to {arrival_airport} on {date}")

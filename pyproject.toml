@@ -9,7 +9,7 @@ dependencies = [
     "bump-my-version>=0.32.2",
     "dateparser>=1.2.1",
     "dotenv>=0.9.9",
-    "fast-flights>=2.1",
+    "fast-flights[local]",
     "loguru>=0.7.3",
     "peewee>=3.17.9",
     "polars>=1.23.0",
@@ -43,3 +43,6 @@ message = "chore: bump version: {current_version} → {new_version}"
 filename = "pyproject.toml"
 search = 'version = "{current_version}"'
 replace = 'version = "{new_version}"'
+
+[tool.uv.sources]
+fast-flights = { git = "https://github.com/kiinami/flights", branch = "local" }
