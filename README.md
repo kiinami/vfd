@@ -15,7 +15,8 @@ The project uses the really nice [fast-flights](https://github.com/AWeirdDev/fli
 Google Flights, the [Streamlit](https://streamlit.io/) library to create the web interface,
 and [apprise](https://github.com/caronc/apprise) to send notifications.
 
-This project is still in its early stages, so there are a lot of features that I would like to add in the future. If you have any suggestions, feel free to open an issue or a pull request.
+> [!warning]
+> This project is still in its early stages. There are numerous bugs and general inefficiencies everywhere. There are also a lot of features missing. If you have any suggestions, encounter any bugs or have any comments, feel free to open an issue or a pull request!
 
 ## Features
 
